@@ -68,16 +68,13 @@ text {
 	visibility: hidden;
 } */
 
-.dot {
-	stroke: #000;
-	opacity: 0.8;
+.cell {
+	/* stroke: #000;
+	opacity: 0.8; */
 	cursor: pointer;
 }
 
-.dot:hover {
-	filter: brightness(1.75);
-}
-
-.legend-label rect {
+.cell:hover {
+	/* filter: brightness(1.75); */
 	stroke: #000;
 }
