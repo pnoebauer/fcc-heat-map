@@ -26,7 +26,7 @@ async function loadAndPlotData() {
 
 	let {monthlyVariance} = data;
 
-	monthlyVariance = monthlyVariance.slice(0, 40);
+	monthlyVariance = monthlyVariance.slice(0, 200);
 
 	console.log(monthlyVariance);
 
@@ -41,20 +41,40 @@ async function loadAndPlotData() {
 	// 	.domain([11, 0]);
 	// // .domain(d3.extent(monthlyVariance, d => d.month));
 
-	var yScale = d3
+	const yScale = d3
 		.scaleBand()
 		.domain([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-		.range([padding, h - padding]);
+		.range([padding / 2, h - padding * 2]);
 
 	const barWidth =
 		xScale(new Date(monthlyVariance[0].year + 1, 0)) -
 		xScale(new Date(monthlyVariance[0].year, 0));
 
-	// console.log(xScale(new Date(monthlyVariance[0].year, 0)));
-	// console.log(xScale(new Date(1754, 0)));
-
 	const barHeight = yScale(2) - yScale(1);
-	// console.log(yScale(2) - yScale(1), yScale(11), yScale(0));
+
+	const colorPalette = d3
+		.scaleSequential()
+		.domain(d3.extent(monthlyVariance, d => d.variance))
+		.interpolator(d3.interpolateViridis);
+	// .interpolator(d3.interpolatePuRd);
+
+	// console.log(d3.extent(monthlyVariance, d => d.variance));
+	const range =
+		d3.extent(monthlyVariance, d => d.variance)[1] -
+		d3.extent(monthlyVariance, d => d.variance)[0];
+
+	const numberColors = 6;
+	const colorRanges = [];
+	for (let i = 0; i < numberColors; i++) {
+		// console.log(
+		// 	d3.extent(monthlyVariance, d => d.variance)[0] + (range / (numberColors - 1)) * i
+		// );
+		colorRanges.push(
+			d3.extent(monthlyVariance, d => d.variance)[0] + (range / (numberColors - 1)) * i
+		);
+	}
+
+	// const colorPalette = d3.scaleOrdinal().domain(colorRanges).range(d3.schemeSet3);
 
 	svg
 		.selectAll('rect')
@@ -66,58 +86,47 @@ async function loadAndPlotData() {
 		// .attr('height', barHeight)
 		.attr('height', yScale.bandwidth())
 		.attr('width', barWidth)
-		.attr('fill', 'red');
+		// .attr('fill', 'red')
+		.attr('fill', d => colorPalette(d.variance));
 
 	const xAxis = d3.axisBottom(xScale).ticks(3);
 	// .tickFormat((date, i) => (i % 2 ? date.getFullYear() : '')); //not really needed anymore as css handles it
 
 	svg
 		.append('g')
-		.attr('transform', `translate(0, ${h - padding})`)
+		.attr('transform', `translate(0, ${h - padding * 2})`)
 		.attr('id', 'x-axis')
 		.call(xAxis);
-
-	// const yScaleAx = d3
-	// .scaleLinear()
-	// .range([h - padding, padding])
-	// // .domain([11.5, 0.5]);
-	// .domain([12, 1]);
-
-	// var yScaleAx = d3
-	// 	.scaleBand()
-	// 	.domain([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-	// 	.range([padding, h - padding])
-	// 	// .padding(0)
-	// 	.paddingInner(0) // edit the inner padding value in [0,1]
-	// 	.paddingOuter(0) // edit the outer padding value in [0,1]
-	// 	.align(0);
-
-	// const yScaleAx = d3
-	// 	.scaleLinear()
-	// 	.range([h - padding, padding])
-	// 	.domain([11, 0]);
-
-	// console.log(yScaleAx(2) - yScaleAx(1));
 
 	const yAxis = d3.axisLeft(yScale); //.ticks(10);
 	yAxis.tickFormat((y, i) =>
 		y > 11 ? '' : new Date(2021, y).toLocaleString('en-us', {month: 'long'})
 	);
 
-	const drawnYAxis = svg
+	svg
 		.append('g')
 		.attr('transform', `translate(${padding}, 0)`)
 		.attr('id', 'y-axis')
 		.call(yAxis);
-	// // .selectAll('text')
-	// // .attr('y', -15)
-	// // .attr("x", 6)
-	// // .style('text-anchor', 'end');
-	// drawnYAxis.selectAll('text').attr('y', -15).attr('x', -15).style('text-anchor', 'end');
 
-	// drawnYAxis.selectAll('line').attr('transform', `translate(0, -15)`);
-	// // .attr("x", 6)
-	// // .style('text-anchor', 'end');
+	const legend = svg
+		.append('g')
+		.attr('transform', `translate(200, ${h - padding})`)
+		.attr('id', 'legend');
+
+	// var o = d3.scaleOrdinal().domain([1, 2, 3, 4]).rangePoints([0, 100]);
+	var o = d3.scalePoint().domain([1, 2, 3, 4]).range([0, 100]);
+	console.log(o.range()); // [0, 33.333333333333336, 66.66666666666667, 100]
+
+	// legend
+	// 	.selectAll('rect')
+	// 	.data(colorRanges)
+	// 	.enter()
+	// 	.append('rect')
+	// 	.attr('height', 20)
+	// 	.attr('width', 20)
+	// 	.attr('x', (d, i) => i * 20)
+	// 	.attr('fill', (d, i) => console.log(d, i, colorPalette(d)) || colorPalette(d));
 }
 
 loadAndPlotData();
